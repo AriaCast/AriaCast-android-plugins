@@ -2,7 +2,8 @@ console.info("MA Plugin 1.9.3 Loaded");
 
 var currentHost = null;
 var isPolling = false;
-var ARIACAST_SOURCE_ID = "ariacast";
+var ariacastSourceId = "ariacast";
+var ariacastName = "AriaCast";
 
             function startPolling(host) {
                 if (isPolling) return;
@@ -186,7 +187,7 @@ var ARIACAST_SOURCE_ID = "ariacast";
                                                 var sources = JSON.parse(sourcesRes);
                                                 for (var i = 0; i < sources.length; i++) {
                                                     var src = sources[i];
-                                                    if (src.source_id === ARIACAST_SOURCE_ID || src.domain === ARIACAST_SOURCE_ID || (src.name && src.name.indexOf("AriaCast") !== -1)) {
+                                                    if (src.source_id === ariacastSourceId || src.domain === ariacastSourceId || (src.name && src.name.indexOf(ariacastName) !== -1)) {
                                                         sourceId = src.source_id || src.id || src.domain;
                                                         break;
                                                     }
@@ -204,7 +205,7 @@ var ARIACAST_SOURCE_ID = "ariacast";
                                                     var providers = JSON.parse(providersRes);
                                                     for (var j = 0; j < providers.length; j++) {
                                                         var prov = providers[j];
-                                                        if (prov.domain === ARIACAST_SOURCE_ID || (prov.name && prov.name.indexOf("AriaCast") !== -1)) {
+                                                        if (prov.domain === ariacastSourceId || (prov.name && prov.name.indexOf(ariacastName) !== -1)) {
                                                             sourceId = prov.instance_id || prov.domain;
                                                             break;
                                                         }
@@ -220,7 +221,7 @@ var ARIACAST_SOURCE_ID = "ariacast";
                                             });
                                             http.post(rpcUrl, selectBody, h);
                                         } else {
-                                            var fallbackBody = JSON.stringify({ command: "players/cmd/select_source", args: { player_id: id, source: ARIACAST_SOURCE_ID } });
+                                            var fallbackBody = JSON.stringify({ command: "players/cmd/select_source", args: { player_id: id, source: ariacastSourceId } });
                                             http.post(rpcUrl, fallbackBody, h);
                                         }
                                         
