@@ -1,7 +1,8 @@
 console.info("MA Plugin 1.9.3 Loaded");
 
-            var currentHost = null;
-            var isPolling = false;
+var currentHost = null;
+var isPolling = false;
+var ARIACAST_SOURCE_ID = "ariacast";
 
             function startPolling(host) {
                 if (isPolling) return;
@@ -177,7 +178,7 @@ console.info("MA Plugin 1.9.3 Loaded");
                                         var sourceId = null;
                                         var sourcesRes = ws.request(wsUrl, "players/plugin_sources", null, t);
                                         if (!sourcesRes || String(sourcesRes).indexOf("Error") === 0) {
-                                            sourcesRes = http.post(rpcUrl, JSON.stringify({ command: "players/plugin_sources", args: {} }), h);
+                                            sourcesRes = http.post(rpcUrl, JSON.stringify({ command: "players/plugin_sources" }), h);
                                         }
                                         
                                         if (sourcesRes && String(sourcesRes).indexOf("Error") !== 0) {
@@ -185,7 +186,7 @@ console.info("MA Plugin 1.9.3 Loaded");
                                                 var sources = JSON.parse(sourcesRes);
                                                 for (var i = 0; i < sources.length; i++) {
                                                     var src = sources[i];
-                                                    if (src.source_id === "ariacast" || src.domain === "ariacast" || (src.name && src.name.indexOf("AriaCast") !== -1)) {
+                                                    if (src.source_id === ARIACAST_SOURCE_ID || src.domain === ARIACAST_SOURCE_ID || (src.name && src.name.indexOf("AriaCast") !== -1)) {
                                                         sourceId = src.source_id || src.id || src.domain;
                                                         break;
                                                     }
@@ -196,14 +197,14 @@ console.info("MA Plugin 1.9.3 Loaded");
                                         if (!sourceId) {
                                             var providersRes = ws.request(wsUrl, "providers", null, t);
                                             if (!providersRes || String(providersRes).indexOf("Error") === 0) {
-                                                providersRes = http.post(rpcUrl, JSON.stringify({ command: "providers", args: {} }), h);
+                                                providersRes = http.post(rpcUrl, JSON.stringify({ command: "providers" }), h);
                                             }
                                             if (providersRes && String(providersRes).indexOf("Error") !== 0) {
                                                 try {
                                                     var providers = JSON.parse(providersRes);
                                                     for (var j = 0; j < providers.length; j++) {
                                                         var prov = providers[j];
-                                                        if (prov.domain === "ariacast" || (prov.name && prov.name.indexOf("AriaCast") !== -1)) {
+                                                        if (prov.domain === ARIACAST_SOURCE_ID || (prov.name && prov.name.indexOf("AriaCast") !== -1)) {
                                                             sourceId = prov.instance_id || prov.domain;
                                                             break;
                                                         }
@@ -219,7 +220,7 @@ console.info("MA Plugin 1.9.3 Loaded");
                                             });
                                             http.post(rpcUrl, selectBody, h);
                                         } else {
-                                            var fallbackBody = JSON.stringify({ command: "players/cmd/select_source", args: { player_id: id, source: "ariacast" } });
+                                            var fallbackBody = JSON.stringify({ command: "players/cmd/select_source", args: { player_id: id, source: ARIACAST_SOURCE_ID } });
                                             http.post(rpcUrl, fallbackBody, h);
                                         }
                                         
