@@ -1,7 +1,9 @@
-console.info("MA Plugin 1.9.2 Loaded");
+console.info("MA Plugin 1.9.3 Loaded");
 
-            var currentHost = null;
-            var isPolling = false;
+var currentHost = null;
+var isPolling = false;
+var ariacastSourceId = "ariacast";
+var ariacastName = "AriaCast";
 
             function startPolling(host) {
                 if (isPolling) return;
@@ -174,23 +176,42 @@ console.info("MA Plugin 1.9.2 Loaded");
                                         var rpcUrl = baseUrl + "/api";
                                         var h = t ? JSON.stringify({ "Authorization": "Bearer " + t }) : null;
                                         
-                                        var providersRes = ws.request(wsUrl, "providers", null, t);
-                                        if (!providersRes || String(providersRes).indexOf("Error") === 0) {
-                                            providersRes = http.post(rpcUrl, JSON.stringify({ command: "providers" }), h);
+                                        var sourceId = null;
+                                        var sourcesRes = ws.request(wsUrl, "players/plugin_sources", null, t);
+                                        if (!sourcesRes || String(sourcesRes).indexOf("Error") === 0) {
+                                            sourcesRes = http.post(rpcUrl, JSON.stringify({ command: "players/plugin_sources" }), h);
                                         }
                                         
-                                        var sourceId = null;
-                                        if (providersRes && String(providersRes).indexOf("Error") !== 0) {
+                                        if (sourcesRes && String(sourcesRes).indexOf("Error") !== 0) {
                                             try {
-                                                var providers = JSON.parse(providersRes);
-                                                for (var i = 0; i < providers.length; i++) {
-                                                    var prov = providers[i];
-                                                    if (prov.domain === "ariacast" || (prov.name && prov.name.indexOf("AriaCast") !== -1)) {
-                                                        sourceId = prov.instance_id || prov.domain;
+                                                var sources = JSON.parse(sourcesRes);
+                                                for (var i = 0; i < sources.length; i++) {
+                                                    var src = sources[i];
+                                                    if (src.source_id === ariacastSourceId || src.domain === ariacastSourceId || (src.name && src.name.indexOf(ariacastName) !== -1)) {
+                                                        sourceId = src.source_id || src.id || src.domain;
                                                         break;
                                                     }
                                                 }
                                             } catch(e) {}
+                                        }
+                                        
+                                        if (!sourceId) {
+                                            var providersRes = ws.request(wsUrl, "providers", null, t);
+                                            if (!providersRes || String(providersRes).indexOf("Error") === 0) {
+                                                providersRes = http.post(rpcUrl, JSON.stringify({ command: "providers" }), h);
+                                            }
+                                            if (providersRes && String(providersRes).indexOf("Error") !== 0) {
+                                                try {
+                                                    var providers = JSON.parse(providersRes);
+                                                    for (var j = 0; j < providers.length; j++) {
+                                                        var prov = providers[j];
+                                                        if (prov.domain === ariacastSourceId || (prov.name && prov.name.indexOf(ariacastName) !== -1)) {
+                                                            sourceId = prov.instance_id || prov.domain;
+                                                            break;
+                                                        }
+                                                    }
+                                                } catch(e) {}
+                                            }
                                         }
                                         
                                         if (sourceId) {
@@ -200,7 +221,7 @@ console.info("MA Plugin 1.9.2 Loaded");
                                             });
                                             http.post(rpcUrl, selectBody, h);
                                         } else {
-                                            var fallbackBody = JSON.stringify({ command: "players/cmd/select", args: { player_id: id } });
+                                            var fallbackBody = JSON.stringify({ command: "players/cmd/select_source", args: { player_id: id, source: ariacastSourceId } });
                                             http.post(rpcUrl, fallbackBody, h);
                                         }
                                         
@@ -246,13 +267,14 @@ console.info("MA Plugin 1.9.2 Loaded");
                     var username = userField.getText().toString();
                     var password = passField.getText().toString();
                     bg.run(function() {
-                        var loginBody = JSON.stringify({ "credentials": { "username": username, "password": password } });
+                        var loginBody = JSON.stringify({ "username": username, "password": password });
                         var loginUrl = "http://" + host + ":8095/auth/login";
                         var loginResponse = http.post(loginUrl, loginBody);
-                        if (loginResponse && String(loginResponse).indexOf("token") !== -1) {
+                        if (loginResponse && (String(loginResponse).indexOf("access_token") !== -1 || String(loginResponse).indexOf("token") !== -1)) {
                             var data = JSON.parse(loginResponse);
-                            if (data.token) {
-                                storage.set("auth_token", data.token);
+                            var token = data.access_token || data.token;
+                            if (token) {
+                                storage.set("auth_token", token);
                                 renderMAUI(host); 
                             }
                         }
